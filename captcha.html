@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Numbered Image CAPTCHA</title>
+
+    <style>
+        /* Add your CSS styles here */
+        .captcha-image {
+            max-width: 300px;
+            max-height: 300px;
+            margin: 10px;
+            position: relative;
+        }
+
+        .sequence-number {
+            position: absolute;
+            margin: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            font-weight: bold;
+            color: black;
+        }
+
+        #error-message {
+            color: red;
+            font-weight: bold;
+        }
+
+        #success-message {
+            color: green;
+            font-weight: bold;
+        }
+
+        .container {
+            position: relative;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .overlay-text {
+            color: black;
+            font-size: 18px;
+            display: none;
+        }
+        #timer {
+    margin-top: 10px; /* Adjust margin as needed */
+    font-size: 16px; /* Adjust font size as needed */
+    color: black; /* Adjust color as needed */
+}
+
+    </style>
+</head>
+
+<body>
+    <h2>Numbered Image CAPTCHA</h2>
+    <div id="timer"></div>
+
+
+
+    <div id="captcha-container">
+        <!-- Images -->
+        <div class="container">
+            <img src="rose.png" alt="Image 0" class="captcha-image" data-number="0" onclick="handleImageClick(0)">
+            <div class="overlay-text" id="textOverlay0">Click me!</div>
+            <div class="sequence-number"></div>
+        </div>
+
+        <div class="container">
+            <img src="house.png" alt="Image 1" class="captcha-image" data-number="1" onclick="handleImageClick(1)">
+            <div class="overlay-text" id="textOverlay1">Click me!</div>
+            <div class="sequence-number"></div>
+        </div>
+
+        <div class="container">
+            <img src="intro1.png" alt="Image 2" class="captcha-image" data-number="2" onclick="handleImageClick(2)">
+            <div class="overlay-text" id="textOverlay2">Click me!</div>
+            <div class="sequence-number"></div>
+        </div>
+
+        <div class="container">
+            <img src="spider.png" alt="Image 3" class="captcha-image" data-number="3" onclick="handleImageClick(3)">
+            <div class="overlay-text" id="textOverlay3">Click me!</div>
+            <div class="sequence-number"></div>
+        </div>
+
+        <div class="container">
+            <img src="hotdog.png" alt="Image 4" class="captcha-image" data-number="4" onclick="handleImageClick(4)">
+            <div class="overlay-text" id="textOverlay4">Click me!</div>
+            <div class="sequence-number"></div>
+        </div>
+
+        <!-- Audio -->
+        <audio controls id="audio-description" style="margin: 40px;">
+            <source src="audio-description.mp3" type="audio/mpeg">
+            Your browser does not support the audio tag.
+        </audio>
+
+        <!-- Error and Success Messages -->
+        <div id="error-message"></div>
+        <div id="success-message"></div>
+
+        <!-- Submit Button -->
+        <button onclick="checkSequence()">Submit</button>
+    </div>
+<script>
+    let timerInterval; // Variable to hold the timer interval
+    let startTime; // Variable to hold the start time of the timer
+    let elapsedTime = 0; // Variable to hold the elapsed time in seconds
+    // Add your JavaScript logic here
+    const shuffledDataNumbers = [];
+    let expectedSequence = [1, 2, 3];
+    let userSequence = [];
+    const dynamicImageArray = [1, 4, 7]; // Array for dynamically choosing images
+    const imageBasePath = 'images/'; // Base path for image sources
+    // Generate a random permutation of numbers from 0 to 4
+let numbers = [0, 1, 2, 3, 4];
+numbers = shuffle(numbers);
+function startTimer() {
+    startTime = performance.now(); // Get the current time when the timer starts
+    timerInterval = setInterval(updateTimer, 100); // Update the timer every 100 milliseconds
+}
+
+// Function to update the timer display
+// Function to update the timer display
+function updateTimer() {
+    const currentTime = performance.now();
+    elapsedTime = Math.floor((currentTime - startTime) / 1000); // Calculate elapsed time in seconds
+    document.getElementById('timer').textContent = 'Elapsed time: ' + elapsedTime + ' seconds'; // Update the timer display
+    
+    if (elapsedTime > 60) {
+        // Reload the page if elapsed time exceeds 60 seconds
+        location.reload();
+    }
+}
+
+
+// Function to stop the timer
+function stopTimer() {
+    clearInterval(timerInterval); // Clear the timer interval
+}
+// Assign the shuffled numbers to the data-number attributes of images
+numbers.forEach((number, index) => {
+    document.querySelector(`[data-number="${index}"]`).setAttribute('data-number', number);
+});
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+
+// Modify the assignSequenceNumber function to start the timer when the first image is clicked
+function assignSequenceNumber(imageNumber) {
+    if (userSequence.length === 0) {
+        startTimer(); // Start the timer when the first image is clicked
+    }
+
+    const textOverlay = document.getElementById("textOverlay" + imageNumber);
+    textOverlay.style.display = "none";
+
+    const index = userSequence.indexOf(imageNumber);
+
+    if (index === -1) {
+        userSequence.push(imageNumber);
+    } else {
+        userSequence.splice(index, 1);
+    }
+
+    updateDisplay();
+}
+
+    function updateDisplay() {
+        document.querySelectorAll('.container').forEach((container, index) => {
+            const sequenceNumberElement = container.querySelector('.sequence-number');
+            if (sequenceNumberElement) {
+                const userIndex = userSequence.indexOf(index);
+                sequenceNumberElement.textContent = userIndex !== -1 ? userIndex + 1 : '';
+            }
+        });
+    }
+
+function checkSequence() {
+    stopTimer(); // Stop the timer when the user clicks on submit
+
+    if (arraysEqual(userSequence, expectedSequence)) {
+        document.getElementById('error-message').textContent = '';
+        document.getElementById('success-message').textContent = 'Successful login! Elapsed time: ' + elapsedTime + ' seconds';
+    } else {
+        document.getElementById('success-message').textContent = '';
+        document.getElementById('error-message').textContent = 'Incorrect sequence. Try again.'+getDataNumberOrder();
+        userSequence = [];
+        updateDisplay();
+    }
+}
+
+    function arraysEqual(arr1, arr2) {
+        if (arr1.length !== arr2.length) return false;
+        for (let i = 0; i < arr1.length; i++)
+        {
+            if (arr1[i] !== arr2[i]) return false;
+        }
+        return true;
+    }
+
+    let maxAllowedClicks = 3; // Set the maximum number of allowed clicks
+
+    function handleImageClick(imageNumber) {
+        const index = userSequence.indexOf(imageNumber);
+
+        if (index === -1) {
+            // If the image is not in the sequence, assign the sequence number
+            if (userSequence.length < maxAllowedClicks) {
+                assignSequenceNumber(imageNumber);
+            } else {
+                // If the maximum allowed clicks are reached, do nothing
+                return;
+            }
+        } else if (index === userSequence.length - 1) {
+            // If the last clicked image is clicked again, unclick it
+            userSequence.splice(index, 1);
+        } else {
+            // If any image other than the last one is clicked, refresh the entire sequence
+            userSequence = [];
+            updateDisplay();
+            return;
+        }
+
+        updateDisplay();
+    }
+
+    // Dynamically replace images at positions 1, 2, and 3 with randomly chosen images
+        function replaceImagesDynamically() {
+            const dynamicIndex = Math.floor(Math.random() * dynamicImageArray.length);
+            const dynamicNumber = dynamicImageArray[dynamicIndex];
+
+            document.querySelector('[data-number="1"]').setAttribute('src',+ dynamicNumber + '.png');
+            document.querySelector('[data-number="2"]').setAttribute('src',+ (dynamicNumber + 1) + '.png');
+            document.querySelector('[data-number="3"]').setAttribute('src',+ (dynamicNumber + 2) + '.png');
+
+            const imageArray = ["rand1.png", "rand2.png", "rand3.png", "rand4.png", "rand5.png",
+                    "rand6.png", "rand7.png", "rand8.png", "rand9.png", "rand10.png"];
+            const audioSource = dynamicNumber + '.mp3';
+    document.getElementById('audio-description').setAttribute('src', audioSource);
+    setExpectedSequence;
+
+const randomIndexes = [0, 4]; // Positions where images should be replaced
+const usedImages = {}; // Object to keep track of used images
+
+randomIndexes.forEach((index) => {
+    let dynamicIndex;
+    do {
+        dynamicIndex = Math.floor(Math.random() * imageArray.length);
+    } while (usedImages[dynamicIndex]); // Check if the image has already been used
+    usedImages[dynamicIndex] = true; // Mark the image as used
+   
+    const randomImage = imageArray[dynamicIndex];
+   
+    // Update the src attribute of the image at the specified position
+    document.querySelector('[data-number="' + index + '"]').setAttribute('src', randomImage);
+
+});
+   
+
+        }
+function getDataNumberOrder() {
+    const order = [];
+    document.querySelectorAll('.captcha-image').forEach((image) => {
+        const dataNumber = parseInt(image.getAttribute('data-number'));
+        order.push(dataNumber);
+    });
+    return order;
+}
+function setExpectedSequence() {
+    const order = getDataNumberOrder();
+    expectedSequence = [order.indexOf(1), order.indexOf(2), order.indexOf(3)];
+}
+
+    // Call the function to dynamically replace images when the page loads
+    // Call the function to dynamically replace images when the page loads
+window.onload = function() {
+    replaceImagesDynamically();
+    setExpectedSequence();
+   
+};
+</script>
+</body>
+</html>
